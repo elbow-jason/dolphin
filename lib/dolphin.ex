@@ -1,0 +1,2 @@
+defmodule Dolphin do
+end
