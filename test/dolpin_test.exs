@@ -1,4 +1,4 @@
-defmodule DolpinGenServerQueueTest do
+defmodule DolphinGenServerQueueTest do
   use ExUnit.Case
   doctest Dolphin.GenServerQueue
 
