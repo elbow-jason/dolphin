@@ -46,21 +46,11 @@ defmodule Dolphin.Worker do
       def process_job(name) do
         case @queue_module.pop do
           {:ok, [job]} ->
-            Logger.debug("""
-              >>==>>==>> Processing Job >>==>>==>>
-              [MODULE]  #{inspect __MODULE__}
-              [WORKER]  #{inspect name}
-              [JOB]     #{inspect job}
-            """)
+            Logger.debug("#{__MODULE__} - worker #{inspect name} - Processing Job #{inspect job}")
             GenServer.call(name, job)
             :ok
           {:error, reason} ->
-            Logger.debug("""
-              <<==<<==<< Stopping Worker <<==<<==<<
-              [MODULE]  #{inspect __MODULE__}
-              [WORKER]  #{inspect name}
-              [REASON]  #{inspect reason}
-            """)
+            Logger.debug("#{__MODULE__} - worker #{inspect name} - Stopping - #{inspect reason}")
             @manager_module.stop_workers
         end
       end

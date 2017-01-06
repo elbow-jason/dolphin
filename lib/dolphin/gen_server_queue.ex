@@ -57,13 +57,7 @@ defmodule Dolphin.GenServerQueue do
       end
 
       def log_status(state, action) do
-        Logger.debug("""
-
-        [MODULE]#{__MODULE__}
-        [ACTION] #{inspect action}
-        [ENQUEUED] #{length(state)}
-        [NEXT] #{state |> List.first |> inspect}
-        """)
+        Logger.debug("#{__MODULE__} #{inspect action} - [ENQUEUED] #{length(state)} - [NEXT] #{state |> List.first |> inspect}")
       end
 
     end
