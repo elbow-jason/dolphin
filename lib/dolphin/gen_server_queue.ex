@@ -3,14 +3,18 @@ defmodule Dolphin.GenServerQueue do
   defmacro __using__(_) do
     quote do
       use GenServer
-      require Logger
+      require Dolphin.Logging
 
       # API
       def append(items) when is_list(items) do
         GenServer.call(__MODULE__, {:append, items})
       end
 
-      def push(items) when is_list(items) do
+      def swap(new_items) when is_list(new_items) do
+        GenServer.call(__MODULE__, {:swap, new_items})
+      end
+
+      def push(items) when items |> is_list do
         GenServer.call(__MODULE__, {:push, items})
       end
       def push(item) do
@@ -55,9 +59,12 @@ defmodule Dolphin.GenServerQueue do
         log_status([], :clear)
         {:reply, :ok, []}
       end
+      def handle_call({:swap, new_state}, _from, state) do
+        {:reply, state, new_state}
+      end
 
       def log_status(state, action) do
-        Logger.debug("#{__MODULE__} #{inspect action} - [ENQUEUED] #{length(state)} - [NEXT] #{state |> List.first |> inspect}")
+        Dolphin.Logging.debug("#{__MODULE__} #{inspect action} - [ENQUEUED] #{length(state)} - [NEXT] #{state |> List.first |> inspect}")
       end
 
     end
