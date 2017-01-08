@@ -1,9 +1,9 @@
 defmodule Dolphin.Worker do
-  alias Dolphin.Logging
-
-
   defmacro __using__(opts) do
     quote do
+
+      use Slogger, level: :info
+
       opts = unquote(opts)
       @manager_module opts |> Keyword.get(:manager_module)
       if !@manager_module do
@@ -15,9 +15,8 @@ defmodule Dolphin.Worker do
         raise "Dolphin.Worker requires a :queue_module"
       end
 
-      @timeout_ms opts |> Keyword.get(:timeout, 60_000)
+      #@timeout_ms opts |> Keyword.get(:timeout, 60_000)
 
-      require Dolphin.Logging
 
       def start_link(name) do
         GenServer.start_link(__MODULE__, name, name: name)
@@ -48,11 +47,11 @@ defmodule Dolphin.Worker do
       def process_job(name) do
         case @queue_module.pop do
           {:ok, [job]} ->
-            Dolphin.Logging.debug("#{__MODULE__} - worker #{inspect name} - Processing Job #{inspect job}")
+            Slogger.debug("#{__MODULE__} - worker: #{inspect name} - Processing - #{inspect job}")
             GenServer.call(name, job)
             :ok
           {:error, reason} ->
-            Dolphin.Logging.debug("#{__MODULE__} - worker #{inspect name} - Stopping - #{inspect reason}")
+            Slogger.debug("#{__MODULE__} - worker: #{inspect name} - Stopping - #{inspect reason}")
             @manager_module.stop_workers
         end
       end

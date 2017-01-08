@@ -3,11 +3,11 @@ defmodule DolphinGenServerQueueTest do
   doctest Dolphin.GenServerQueue
 
   setup do
-    {:ok, pid} = DolphinTest.Queue.start_link
-    {:ok, pid} = DolphinTest.Manager.start_link
-    {:ok, pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_01)
-    {:ok, pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_02)
-    {:ok, pid} = DolphinTest.Accumulator.start_link
+    {:ok, _pid} = DolphinTest.Queue.start_link
+    {:ok, _pid} = DolphinTest.Manager.start_link
+    {:ok, _pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_01)
+    {:ok, _pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_02)
+    {:ok, _pid} = DolphinTest.Accumulator.start_link
     :ok
   end
 

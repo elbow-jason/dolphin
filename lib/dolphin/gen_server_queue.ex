@@ -3,7 +3,7 @@ defmodule Dolphin.GenServerQueue do
   defmacro __using__(_) do
     quote do
       use GenServer
-      require Dolphin.Logging
+      use Slogger, level: :info
 
       # API
       def append(items) when is_list(items) do
@@ -64,7 +64,7 @@ defmodule Dolphin.GenServerQueue do
       end
 
       def log_status(state, action) do
-        Dolphin.Logging.debug("#{__MODULE__} #{inspect action} - [ENQUEUED] #{length(state)} - [NEXT] #{state |> List.first |> inspect}")
+        Slogger.debug("#{__MODULE__} action: #{inspect action} - enqueued: #{length(state)} - next: #{state |> List.first |> inspect}")
       end
 
     end
