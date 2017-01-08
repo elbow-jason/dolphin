@@ -1,6 +1,13 @@
+<p align="center">
+    <img height="200" width="200" src="https://raw.githubusercontent.com/elbow-jason/dolphin/master/static/dolphin_1.png">
+</p>
+<p align="center">
+  Queueing Utilities
+</p>
+
 # Dolphin
 
-**TODO: Add description**
+Macros for a Queue, Workers, and a Manager.
 
 ## Installation
 
