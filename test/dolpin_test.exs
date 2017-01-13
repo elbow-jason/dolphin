@@ -32,6 +32,13 @@ defmodule DolphinGenServerQueueTest do
     assert DolphinTest.Queue.list == [:clap, :clap]
   end
 
+  test "queue can be prepended" do
+    DolphinTest.Queue.push([:clap, :clap])
+    DolphinTest.Queue.prepend([:first, :second])
+    assert DolphinTest.Queue.list == [:first, :second, :clap, :clap]
+    assert DolphinTest.Queue.pop == {:ok, [:first]}
+  end
+
   test "queue can be multi popped" do
     DolphinTest.Queue.push([:clap, :clap, :clap, :clap])
     DolphinTest.Queue.push(:clap)

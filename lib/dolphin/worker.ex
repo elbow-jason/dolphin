@@ -2,8 +2,6 @@ defmodule Dolphin.Worker do
   defmacro __using__(opts) do
     quote do
 
-      use Slogger, level: :info
-
       opts = unquote(opts)
       @manager_module opts |> Keyword.get(:manager_module)
       if !@manager_module do
@@ -44,14 +42,28 @@ defmodule Dolphin.Worker do
         end
       end
 
+      def cast_job do
+        if @manager_module.running? do
+          Process.send_after(self, :cast_job, 0)
+        end
+      end
+
+      def handle_info(:cast_job, name) do
+        case @queue_module.pop do
+          {:ok, [job]} ->
+            GenServer.cast(name, job)
+            :ok
+          {:error, reason} ->
+            @manager_module.stop_workers
+        end
+      end
+
       def process_job(name) do
         case @queue_module.pop do
           {:ok, [job]} ->
-            Slogger.debug("#{__MODULE__} - worker: #{inspect name} - Processing - #{inspect job}")
             GenServer.call(name, job)
             :ok
           {:error, reason} ->
-            Slogger.debug("#{__MODULE__} - worker: #{inspect name} - Stopping - #{inspect reason}")
             @manager_module.stop_workers
         end
       end
