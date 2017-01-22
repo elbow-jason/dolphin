@@ -7,7 +7,7 @@ defmodule DolphinGenServerQueueTest do
     {:ok, _pid} = DolphinTest.Manager.start_link
     {:ok, _pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_01)
     {:ok, _pid} = DolphinTest.Worker.start_link(:dolphin_test_worker_02)
-    {:ok, _pid} = DolphinTest.Accumulator.start_link
+    #{:ok, _pid} = DolphinTest.Accumulator.start_link
     :ok
   end
 
@@ -53,5 +53,24 @@ defmodule DolphinGenServerQueueTest do
       {:added , sum} -> sum
     end
     assert answer_to_life == 42
+  end
+
+  test "a worker takes one job at a time even if told to start repeatedly" do
+    func = fn -> :timer.sleep(100); :ok end
+    assert length(DolphinTest.Manager.workers) == 2
+    DolphinTest.Queue.push({:exec, func})
+    DolphinTest.Queue.push({:exec, func})
+    DolphinTest.Queue.push({:exec, func})
+    DolphinTest.Queue.push({:exec, func})
+    assert length(DolphinTest.Queue.list) == 4
+    DolphinTest.Manager.start_workers
+    DolphinTest.Manager.start_workers
+    DolphinTest.Manager.start_workers
+    DolphinTest.Manager.start_workers
+    DolphinTest.Manager.start_workers
+    DolphinTest.Manager.start_workers
+    assert length(DolphinTest.Queue.list) == 2
+    :timer.sleep(300)
+    assert DolphinTest.Queue.list == []
   end
 end

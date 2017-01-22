@@ -1,6 +1,12 @@
 defmodule Dolphin.Worker do
+  defstruct [
+    name: nil,
+  ]
+
   defmacro __using__(opts) do
     quote do
+      alias Dolphin.Worker
+      @behaviour Dolphin.WorkerSpec
 
       opts = unquote(opts)
       @manager_module opts |> Keyword.get(:manager_module)
@@ -13,8 +19,6 @@ defmodule Dolphin.Worker do
         raise "Dolphin.Worker requires a :queue_module"
       end
 
-      #@timeout_ms opts |> Keyword.get(:timeout, 60_000)
-
 
       def start_link(name) do
         GenServer.start_link(__MODULE__, name, name: name)
@@ -23,48 +27,69 @@ defmodule Dolphin.Worker do
       def init(name) do
         @manager_module.remove_worker(name)
         @manager_module.add_worker(name)
-        async_process_job(name)
-        {:ok, name}
+        send self(), :start_worker
+        {:ok, %Worker{
+          name: name,
+        }}
       end
 
-      def handle_cast(:start_worker, name) do
-        async_process_job(name)
-        {:noreply, name}
+      def terminate(a, b) do
+        handle_terminate({a, b})
       end
 
+      def state(name),  do: GenServer.call(name, :state)
+
+      def start_worker(%{name: name}), do: start_worker(name)
       def start_worker(name) do
-        GenServer.cast(name, :start_worker)
-      end
-
-      defp async_process_job(name) do
-        if @manager_module.running? do
-          :timer.apply_after(0, __MODULE__, :process_job, [name])
+        case Process.whereis(name) do
+          nil -> raise "Invalid name - No Process for #{inspect name}"
+          pid -> send pid, :start_worker
         end
       end
 
-      def cast_job do
-        if @manager_module.running? do
-          Process.send_after(self, :cast_job, 0)
+      # state, halt and resume
+      def handle_call(:state, _from, state) do
+        {:reply, state, state}
+      end
+
+      def handle_info(:start_worker, state) do
+        work_loop
+        {:noreply, state}
+      end
+
+      def work_loop do
+        if running? do
+          pop_then_handle_work
+          work_loop
         end
       end
 
-      def handle_info(:cast_job, name) do
+      def running? do
+        @manager_module.running?
+      end
+
+      def pop_then_handle_work do
+        with :ok <- :ok,
+          {:ok, job}    <- get_job,
+          {:ok, result} <- handle_work(job),
+          :ok           <- handle_success(result)
+        do
+          :ok
+        else
+          {:error, :empty_queue} ->
+            @manager_module.stop_workers
+            :stopping
+          {:error, _} = err ->
+            handle_failure(err)
+        end
+      end
+
+      def get_job do
         case @queue_module.pop do
           {:ok, [job]} ->
-            GenServer.cast(name, job)
-            :ok
-          {:error, reason} ->
-            @manager_module.stop_workers
-        end
-      end
-
-      def process_job(name) do
-        case @queue_module.pop do
-          {:ok, [job]} ->
-            GenServer.call(name, job)
-            :ok
-          {:error, reason} ->
-            @manager_module.stop_workers
+            {:ok, job}
+          {:error, _} = err ->
+            err
         end
       end
 

@@ -4,6 +4,12 @@ defmodule Dolphin.Manager do
   Dolphin.Queue manages the state of workers
   """
 
+  defstruct [
+    status:   :initialized,
+    workers: [],
+  ]
+
+
   defmacro __using__(opts) do
     quote do
       use GenServer
@@ -13,19 +19,14 @@ defmodule Dolphin.Manager do
         raise "Dolphin.Manager requires a :worker_module with a `start_worker(name)` function"
       end
 
-      defstruct [
-        status:   :initialized,
-        workers: [],
-      ]
-
       # API
       def start_workers do
-        GenServer.cast(__MODULE__, :start_workers)
+        GenServer.call(__MODULE__, :start_workers)
         status
       end
 
       def stop_workers do
-        GenServer.cast(__MODULE__, :stop_workers)
+        GenServer.call(__MODULE__, :stop_workers)
         status
       end
 
@@ -34,7 +35,7 @@ defmodule Dolphin.Manager do
       end
 
       def running? do
-        status == :running
+        status() == :running
       end
 
       def workers do
@@ -51,20 +52,23 @@ defmodule Dolphin.Manager do
 
       # SERVER
       def start_link do
-        GenServer.start_link(__MODULE__, __MODULE__.__struct__, name: __MODULE__)
+        GenServer.start_link(__MODULE__, %Dolphin.Manager{} , name: __MODULE__)
       end
 
-      def handle_cast(:start_workers, state) do
-        spawn(fn -> state
-          |> Map.get(:workers)
-          |> Enum.map(fn name -> @worker_module.start_worker(name) end)
-        end)
-        {:noreply, %{ state | status: :running }}
+
+      def handle_call(:start_workers, _from, %{status: :running} = state) do
+        {:reply, :ok, state}
       end
-      def handle_cast(:stop_workers, state) do
+      def handle_call(:start_workers, _from, state) do
+        state
+        |> Map.get(:workers)
+        |> Enum.map(fn name -> Task.async(fn -> @worker_module.start_worker(name) end) end)
+        |> Enum.map(fn task -> Task.await(task, :infinity) end)
+        {:reply, :ok, %{ state | status: :running }}
+      end
+      def handle_call(:stop_workers, _from, state) do
         {:noreply, %{ state | status: :stopped }}
       end
-
       def handle_call(:workers, _from, state) do
         {:reply, state.workers, state}
       end
