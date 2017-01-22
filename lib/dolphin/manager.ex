@@ -80,8 +80,8 @@ defmodule Dolphin.Manager do
           |> Enum.filter(fn w_name -> w_name != name end)
         {:reply, {:removed, name}, %{ state | workers: workers }}
       end
-      def handle_cast(:stop_workers, _from, state) do
-        {:reply, %{ state | status: :stopped }}
+      def handle_cast(:stop_workers, state) do
+        {:noreply, %{ state | status: :stopped }}
       end
 
       def handle_info({:start_worker, name}, state) do
