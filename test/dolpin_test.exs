@@ -56,21 +56,23 @@ defmodule DolphinGenServerQueueTest do
   end
 
   test "a worker takes one job at a time even if told to start repeatedly" do
-    func = fn -> :timer.sleep(100); :ok end
-    assert length(DolphinTest.Manager.workers) == 2
-    DolphinTest.Queue.push({:exec, func})
-    DolphinTest.Queue.push({:exec, func})
-    DolphinTest.Queue.push({:exec, func})
-    DolphinTest.Queue.push({:exec, func})
-    assert length(DolphinTest.Queue.list) == 4
+    delay = 100
+    func = fn -> :timer.sleep(delay); :ok end
+    num_workers = length(DolphinTest.Manager.workers)
+
+    1..num_workers * 2
+    |> Enum.map(fn _ -> DolphinTest.Queue.push({:exec, func}) end)
+
+
+    assert length(DolphinTest.Queue.list) == 2 * num_workers
     DolphinTest.Manager.start_workers
     DolphinTest.Manager.start_workers
     DolphinTest.Manager.start_workers
     DolphinTest.Manager.start_workers
     DolphinTest.Manager.start_workers
     DolphinTest.Manager.start_workers
-    assert length(DolphinTest.Queue.list) == 2
-    :timer.sleep(300)
+    assert length(DolphinTest.Queue.list) == num_workers
+    :timer.sleep(3 * delay)
     assert DolphinTest.Queue.list == []
   end
 end

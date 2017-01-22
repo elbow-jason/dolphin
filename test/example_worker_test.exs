@@ -10,22 +10,25 @@ defmodule DolphinTest.Worker do
   end
 
   def handle_work({:exec, func}) do
-    IO.puts("handle_work - start #{inspect func}")
+    #IO.puts("handle_work - start #{inspect func}")
     result = func.()
-    IO.puts("handle_work - result #{inspect result}")
+    #IO.puts("handle_work - result #{inspect result}")
     {:ok, result}
   end
 
-  def handle_success(result) do
-    IO.puts("handle_success - result #{inspect result}")
+  def handle_success(_result) do
+    #IO.puts("handle_success - result #{inspect result}")
+    :ok
   end
 
-  def handle_failure({:error, _} = err) do
-    IO.puts("handle_failure - err #{inspect err}")
+  def handle_failure({:error, _} = _err) do
+    #IO.puts("handle_failure - err #{inspect err}")
+    :ok
   end
 
-  def handle_terminate(arg) do
-    IO.puts("handle_terminate - arg #{inspect arg}")
+  def handle_terminate(_arg) do
+    #IO.puts("handle_terminate - arg #{inspect arg}")
+    :ok
   end
 
 end
