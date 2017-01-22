@@ -109,4 +109,15 @@ defmodule DolphinGenServerQueueTest do
         raise "Bad Receive - Timeout"
     end
   end
+
+  test "workers can be stopped" do
+    DolphinMacroTest.Queue.push([{:url, "123"}, {:url, "456"}])
+    DolphinMacroTest.Manager.start_workers
+    :timer.sleep(10)
+    assert DolphinMacroTest.Queue.list == [{:url, "456"}]
+    DolphinMacroTest.Manager.stop_workers
+    :timer.sleep(200)
+    assert DolphinMacroTest.Queue.list == [{:url, "456"}]
+
+  end
 end

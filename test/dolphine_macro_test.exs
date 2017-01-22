@@ -6,12 +6,17 @@ defmodule DolphinMacroTest do
     IO.puts("#{inspect payload}")
     {:ok, payload}
   end
+  def handle_work({:url, url}) do
+    :timer.sleep(150)
+    {:ok, url}
+  end
+
   def handle_work(x) do
     raise "Bad handle_work - #{inspect x}"
   end
 
-  def handle_success(x) do
-    IO.puts("SUCCESS!! #{inspect x}")
+  def handle_success(_x) do
+    # IO.puts("SUCCESS!! #{inspect x}")
     :ok
   end
 
