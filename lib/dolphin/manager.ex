@@ -24,7 +24,7 @@ defmodule Dolphin.Manager do
       end
 
       def stop_workers do
-        GenServer.call(__MODULE__, :stop_workers)
+        GenServer.cast(__MODULE__, :stop_workers)
       end
 
       def status do
@@ -80,8 +80,8 @@ defmodule Dolphin.Manager do
           |> Enum.filter(fn w_name -> w_name != name end)
         {:reply, {:removed, name}, %{ state | workers: workers }}
       end
-      def handle_call(:stop_workers, _from, state) do
-        {:reply, :stopped, %{ state | status: :stopped }}
+      def handle_cast(:stop_workers, _from, state) do
+        {:reply, %{ state | status: :stopped }}
       end
 
       def handle_info({:start_worker, name}, state) do
