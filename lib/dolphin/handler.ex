@@ -1,4 +1,4 @@
-defmodule Dolphin.WorkerSpec do
+defmodule Dolphin.Handler do
   use Behaviour
 
   defcallback handle_work(any) :: {:ok, any} | {:error, any}

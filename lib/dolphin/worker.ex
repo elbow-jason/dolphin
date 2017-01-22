@@ -6,7 +6,7 @@ defmodule Dolphin.Worker do
   defmacro __using__(opts) do
     quote do
       alias Dolphin.Worker
-      @behaviour Dolphin.WorkerSpec
+
 
       opts = unquote(opts)
       @manager_module opts |> Keyword.get(:manager_module)
@@ -19,6 +19,10 @@ defmodule Dolphin.Worker do
         raise "Dolphin.Worker requires a :queue_module"
       end
 
+      @handler_module opts |> Keyword.get(:handler_module, __MODULE__)
+      if @handler_module == __MODULE__ do
+        @behaviour Dolphin.Handler
+      end
 
       def start_link(name) do
         GenServer.start_link(__MODULE__, name, name: name)
@@ -34,7 +38,7 @@ defmodule Dolphin.Worker do
       end
 
       def terminate(a, b) do
-        handle_terminate({a, b})
+        @handler_module.handle_terminate({a, b})
       end
 
       def state(name),  do: GenServer.call(name, :state)
@@ -71,8 +75,8 @@ defmodule Dolphin.Worker do
       def pop_then_handle_work do
         with :ok <- :ok,
           {:ok, job}    <- get_job,
-          {:ok, result} <- handle_work(job),
-          :ok           <- handle_success(result)
+          {:ok, result} <- @handler_module.handle_work(job),
+          :ok           <- @handler_module.handle_success(result)
         do
           :ok
         else
@@ -80,7 +84,7 @@ defmodule Dolphin.Worker do
             @manager_module.stop_workers
             :stopping
           {:error, _} = err ->
-            handle_failure(err)
+            @handler_module.handle_failure(err)
         end
       end
 
